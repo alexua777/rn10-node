@@ -1,0 +1,28 @@
+{
+  "name": "rn10-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexua777/rn10-node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alexua777/rn10-node/issues"
+  },
+  "homepage": "https://github.com/alexua777/rn10-node#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  },
+  "dependencies": {
+    "esm": "^3.2.25",
+    "yargs": "^15.3.1"
+  }
+}
