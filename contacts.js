@@ -1,11 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const log = console.log;
 
-contactsPath = path.join(
-  "./db/contacts.json"
-);
-console.log(contactsPath);
+const contactsPath = "./db/contacts.json";
+
 
 function listContacts() {
   const readContacts = fs.readFileSync(contactsPath, "utf8");
