@@ -3,7 +3,7 @@ const path = require("path");
 const log = console.log;
 
 contactsPath = path.join(
-  "C:/Users/t446166/Documents/Temp-react/rn10-node",
+  "./",
   "/db/contacts.json"
 );
 console.log(contactsPath);
