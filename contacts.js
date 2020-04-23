@@ -3,8 +3,7 @@ const path = require("path");
 const log = console.log;
 
 contactsPath = path.join(
-  "./",
-  "/db/contacts.json"
+  "./db/contacts.json"
 );
 console.log(contactsPath);
 
