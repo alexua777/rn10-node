@@ -1,5 +1,5 @@
 require = require("esm")(module);
 
-const {CrudServer} = require("./api/server");
+const {CrudServer} = require("./server");
 
 new CrudServer().start();
