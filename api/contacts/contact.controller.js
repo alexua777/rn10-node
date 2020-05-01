@@ -39,7 +39,7 @@ class ContactController {
   }
 
   validateUpdatedContact(req, res, next) {
-    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
+    if (!Object.keys(req.body).length) {
       return res.status(400).json(`MissingFields:missing fields`);
     }
     next();
