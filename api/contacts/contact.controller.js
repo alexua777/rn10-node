@@ -1,21 +1,12 @@
-const {
-  listContacts,
-  getContactById,
-  removeContact,
-  updateContact,
-  addContact,
-} = require("../../contacts");
+
+import { contactModel } from "./contacts.model";
 import Joi from "joi";
-import { createControllerProxy } from "../helpers/controllerProxy";
+
 
 class ContactController {
-  createContact(req, res, next) {
+   async createContact(req, res, next) {
     try {
-      const newContact = {
-        ...req.body,
-      };
-      addContact(newContact);
-
+      const newContact =  await contactModel.createContact(req.body);
       return res.status(201).json(newContact);
     } catch (err) {
       next(next);
@@ -45,42 +36,61 @@ class ContactController {
     next();
   }
 
-  getAllContacts(req, res, next) {
-    const contactList = JSON.parse(listContacts());
+  async getAllContacts(req, res, next) {
+    
+    const contactList = await contactModel.getAllContacts();
     res.status(200).json(contactList);
   }
 
-  getById(req, res, next) {
+  async getById(req, res, next) {
     try {
       const { contactId } = req.params;
-      const foundContact = getContactById(Number(contactId));
+      const foundContact = await contactModel.getById(contactId);
 
+      // if (!foundContact) {
+      //   return "User not found";
+      // }
       return res.status(200).json(foundContact);
     } catch (err) {
       next(err);
     }
   }
 
-  updateContactById(req, res, next) {
+  async updateContactById(req, res, next) {
     try {
       const { contactId } = req.params;
-      const updatedContact = updateContact(Number(contactId), req.body);
-      return res.status(200).json(updatedContact);
+      const foundContact = contactModel.getById(contactId);
+
+      if (!foundContact) {
+        return "User not found";
+      }
+      console.log(foundContact);
+      
+      const updatedContact = await contactModel.updateContactById(
+        contactId,
+        req.body
+      );
+      return res.status(200).json(updatedContact.value);
     } catch (err) {
       next(err);
     }
   }
 
-  deleteContact(req, res, next) {
+  async deleteContact(req, res, next) {
     try {
-        const { contactId } = req.params;
-     const  removedContact = removeContact(Number(contactId));
-        return res.status(200).json(removedContact);
+      const { contactId } = req.params;
+      const foundContact = contactModel.getById(contactId);
 
+      if (!foundContact) {
+        return "User not found";
+      }
+           
+      const removedContact = await contactModel.deleteContact(contactId);
+      return res.status(200).json(removedContact);
     } catch (err) {
       next(err);
     }
   }
 }
 
-export const contactController = createControllerProxy(new ContactController());
+export const contactController = new ContactController();
