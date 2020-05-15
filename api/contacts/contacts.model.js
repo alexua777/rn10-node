@@ -7,9 +7,14 @@ const MONGO_DB_URL =
 const MONGO_DB_NAME = "db-contacts";
 
 const contactSchema = new Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  phone: { type: Number, required: true },
+  email: String,
+  passwordHash: String,
+  subscription: {
+    type: String,
+    enum: ["free", "pro", "premium"],
+    default: "free",
+  },
+  token: String,
 });
 
 contactSchema.statics.createContact = createContact;
@@ -17,6 +22,7 @@ contactSchema.statics.getAllContacts = getAllContacts;
 contactSchema.statics.getById = getById;
 contactSchema.statics.updateContactById = updateContactById;
 contactSchema.statics.deleteContact = deleteContact;
+contactSchema.statics.findUserByEmail = findUserByEmail;
 
 async function createContact(userParams) {
   return this.create(userParams);
@@ -34,6 +40,10 @@ async function getById(id) {
   return this.findById(id);
 }
 
+async function findUserByEmail(email){
+  return this.findOne({email});
+}
+
 async function updateContactById(id, userParams) {
   if (!ObjectId.isValid(id)) {
     return null;
@@ -42,7 +52,7 @@ async function updateContactById(id, userParams) {
   return this.findByIdAndUpdate(id, { $set: userParams }, { new: true });
 }
 
-async function deleteContact (id){
+async function deleteContact(id) {
   if (!ObjectId.isValid(id)) {
     return null;
   }
@@ -50,8 +60,7 @@ async function deleteContact (id){
   return this.findByIdAndDelete(id);
 }
 
-export const contactModel = mongoose.model("Contact", contactSchema);
-
+export const contactModel = mongoose.model("User", contactSchema);
 
 // class ContactsModel {
 //   constructor() {

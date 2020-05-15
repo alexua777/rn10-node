@@ -5,6 +5,7 @@ const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 import { contactRouter } from "./contacts/contact.router";
 import nongoose from "mongoose";
+import { authRouter } from "./auth/auth.router";
 
 const PORT = 1000;
 const MONGO_DB_URL =
@@ -35,7 +36,8 @@ export class CrudServer {
   }
 
   initRoutes() {
-    this.server.use("/api/contacts", contactRouter);
+    // this.server.use("/api/contacts", contactRouter);
+    this.server.use('/auth', authRouter);
   }
 
   handleErrors() {
