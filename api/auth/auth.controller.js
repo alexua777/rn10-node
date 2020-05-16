@@ -1,6 +1,6 @@
 import { createControllerProxy } from "../helpers/controllerProxy";
 import { contactModel } from "../contacts/contacts.model";
-import { ConflictError } from "../helpers/error.constructor";
+import { ConflictError, UnauthorizedError } from "../helpers/error.constructor";
 import bcryptjs from "bcryptjs";
 import Joi from "joi";
 import jwt from "jsonwebtoken";
@@ -18,12 +18,14 @@ class AuthController {
       //2. check if email exisits in collection
       const { email, password } = req.body;
       const existingUser = await contactModel.findUserByEmail(email);
+      console.log(existingUser);
       if (existingUser) {
         throw new ConflictError("Email in use");
       }
 
       //3. hash password
       const passwordHash = await this.hashpassword(password);
+      console.log(passwordHash);
 
       //4. save user in DB
       const createdUser = await contactModel.createContact({
@@ -31,6 +33,8 @@ class AuthController {
         password,
         passwordHash,
       });
+
+      console.log(createdUser);
 
       //send response
       return res.status(201).json({
@@ -70,7 +74,7 @@ class AuthController {
       //2. fetch user by email from DB
       const { email, password } = req.body;
       const user = await contactModel.findUserByEmail(email);
-      
+
       if (!user) {
         throw new UnauthorizedError("User does not exist");
       }
@@ -80,28 +84,28 @@ class AuthController {
         password,
         user.passwordHash
       );
+
       if (!isPasswordCorrect) {
         throw new UnauthorizedError("Password is incorrect");
       }
-      
-      
+
       //4. JWT
-      const token = this.createToken(user._id);
-      await contactModel.updateContactById(user._id, {token});
+      const token = await this.createToken(user._id);
+
+      await contactModel.updateContactById(user._id, { token });
 
       //5. send successfull response
       return res.status(200).json({
         user: this.composeUserForResponse(user),
         token,
       });
-
-    }catch (err) {
+    } catch (err) {
       next(err);
     }
   }
 
-  async createToken (uid) {
-    return jwt.sign({uid}, JWT_SECRET);
+  async createToken(uid) {
+    return jwt.sign({ uid }, JWT_SECRET);
   }
 
   async validateSignIn(req, res, next) {
@@ -119,10 +123,82 @@ class AuthController {
     next();
   }
 
-  composeUserForResponse(user){
+  async authorize(req, res, next) {
+    try {
+      //1. Get tocken from header
+      const authHeader = req.headers.authorization || "";
+      const token = authHeader.replace("Bearer ", "");
+      //2. verify jwt token
+     
+      try {
+        jwt.verify(token, JWT_SECRET);
+
+      } catch (err) {
+        throw new UnauthorizedError('User not authorized');
+      }
+
+      //3. Find user by token
+      const user = await contactModel.findContactByToken(token);
+      if (!user) {
+        throw new UnauthorizedError('Token is not valid');
+      }
+      //4. Invoke next middleware 
+      req.user = user;
+      req.token = token;
+
+      
+      next();
+
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async signOut(req, res,next) {
+
+    try{
+      await contactModel.updateContactById(req.user._id, {token:null})
+      return res.status(204).json();
+    }catch(err){
+      next(err);
+    }
+  }
+
+  async getCurrentUser(req, res, next){
+    try {
+      //1. Get tocken from header
+      const authHeader = req.headers.authorization || "";
+      const token = authHeader.replace("Bearer ", "");
+      //2. verify jwt token
+     
+      try {
+        jwt.verify(token, JWT_SECRET);
+
+      } catch (err) {
+        throw new UnauthorizedError('User not authorized');
+      }
+
+      //3. Find user by token
+      const user = await contactModel.findContactByToken(token);
+      if (!user) {
+        throw new UnauthorizedError('Token is not valid');
+      }
+      //4. Invoke next middleware 
+      return res.status(200).json({
+        user: this.composeUserForResponse(user),
+        subscription:user.subscription,
+      });
+
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  composeUserForResponse(user) {
     return {
       id: user._id,
       email: user.email,
+      
     };
   }
 }

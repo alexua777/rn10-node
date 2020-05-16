@@ -37,14 +37,16 @@ export class CrudServer {
 
   initRoutes() {
     // this.server.use("/api/contacts", contactRouter);
-    this.server.use('/auth', authRouter);
+    this.server.use("/auth", authRouter);
   }
 
   handleErrors() {
     this.server.use((err, req, res, next) => {
+      console.log(err);
+      debugger;
       delete err.stack;
 
-      return res.status(err.status).send(`${err.name}:${err.message}`);
+      return res.status(err.status || 500).send(`${err.name}:${err.message}`);
     });
   }
 

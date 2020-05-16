@@ -9,5 +9,7 @@ router.post(
   authController.registerUser
 );
 router.post("/login", authController.validateSignIn, authController.signIn);
+router.post("/logout", authController.authorize, authController.signOut);
+router.get('/current', authController.getCurrentUser);
 
 export const authRouter = router;

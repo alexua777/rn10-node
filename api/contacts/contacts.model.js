@@ -6,7 +6,7 @@ const MONGO_DB_URL =
   "mongodb+srv://db_admin:0W0kaqvfLNYrjSI7@cluster0-xfoxb.mongodb.net/db-contacts?retryWrites=true&w=majority";
 const MONGO_DB_NAME = "db-contacts";
 
-const contactSchema = new Schema({
+const contactSchema = new Schema({ 
   email: String,
   passwordHash: String,
   subscription: {
@@ -23,6 +23,7 @@ contactSchema.statics.getById = getById;
 contactSchema.statics.updateContactById = updateContactById;
 contactSchema.statics.deleteContact = deleteContact;
 contactSchema.statics.findUserByEmail = findUserByEmail;
+contactSchema.statics.findContactByToken = findContactByToken;
 
 async function createContact(userParams) {
   return this.create(userParams);
@@ -50,6 +51,11 @@ async function updateContactById(id, userParams) {
   }
 
   return this.findByIdAndUpdate(id, { $set: userParams }, { new: true });
+}
+
+
+async function findContactByToken (token) {
+    return this.findOne({token})
 }
 
 async function deleteContact(id) {
