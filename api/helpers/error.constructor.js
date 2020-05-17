@@ -13,3 +13,17 @@ export class NotFound extends BaseError {
     }
 }
 
+export class ConflictError extends BaseError {
+    constructor(message) {
+        super("ConflictError", message, 409);
+
+    }
+}
+
+export class UnauthorizedError extends BaseError {
+    constructor(message) {
+        super("NotFoudError", message, 401);
+
+    }
+}
+
