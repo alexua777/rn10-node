@@ -6,6 +6,8 @@ import Joi from "joi";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = "dfsdfsfewfsfsdfsdfsdfsdf";
+const SERVER_URL = "http://localhost:1000";
+const COMPRESSED_IMAGES_BASE_URL = "images";
 
 class AuthController {
   constructor() {
@@ -27,14 +29,19 @@ class AuthController {
       const passwordHash = await this.hashpassword(password);
       console.log(passwordHash);
 
+      const avatarURL = `${SERVER_URL}/${COMPRESSED_IMAGES_BASE_URL}/${req.file}`;
+      console.log(avatarURL);
       //4. save user in DB
       const createdUser = await contactModel.createContact({
         email,
         password,
         passwordHash,
+        avatarURL,
       });
 
-      console.log(createdUser);
+        
+    
+
 
       //send response
       return res.status(201).json({
@@ -198,6 +205,7 @@ class AuthController {
     return {
       id: user._id,
       email: user.email,
+      avatarURL:user.avatarURL,
       
     };
   }

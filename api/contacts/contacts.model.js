@@ -9,6 +9,7 @@ const MONGO_DB_NAME = "db-contacts";
 const contactSchema = new Schema({ 
   email: String,
   passwordHash: String,
+  avatarURL: String,
   subscription: {
     type: String,
     enum: ["free", "pro", "premium"],
