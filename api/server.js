@@ -1,6 +1,8 @@
 import express from "express";
 import morgan from "morgan";
 
+
+
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 import { contactRouter } from "./contacts/contact.router";
@@ -31,13 +33,14 @@ export class CrudServer {
   }
 
   initMiddleWare() {
+    this.server.use(express.static('public'));
     this.server.use(express.json());
     this.server.use(morgan("tiny"));
   }
 
   initRoutes() {
     // this.server.use("/api/contacts", contactRouter);
-    this.server.use("/auth", authRouter);
+    this.server.use("/user", authRouter);
   }
 
   handleErrors() {
