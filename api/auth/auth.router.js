@@ -15,5 +15,6 @@ router.patch("/avatar",authController.authorize, upload.single("avatar"), compre
 router.post("/login", authController.validateSignIn, authController.signIn);
 router.post("/logout", authController.authorize, authController.signOut);
 router.get("/current", authController.getCurrentUser);
+router.get("/auth/verify/:verificationToken", authController.verifyUser);
 
 export const authRouter = router;

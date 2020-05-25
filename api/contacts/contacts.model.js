@@ -1,15 +1,17 @@
 // const { MongoClient, ObjectId } = require("mongodb");
 import mongoose, { Schema, Types } from "mongoose";
 const { ObjectId } = mongoose.Types;
+const uuid = require("uuid");
 
 const MONGO_DB_URL =
   "mongodb+srv://db_admin:0W0kaqvfLNYrjSI7@cluster0-xfoxb.mongodb.net/db-contacts?retryWrites=true&w=majority";
 const MONGO_DB_NAME = "db-contacts";
 
-const contactSchema = new Schema({ 
+const contactSchema = new Schema({
   email: String,
   passwordHash: String,
   avatarURL: String,
+  verificationToken: String,
   subscription: {
     type: String,
     enum: ["free", "pro", "premium"],
@@ -25,8 +27,10 @@ contactSchema.statics.updateContactById = updateContactById;
 contactSchema.statics.deleteContact = deleteContact;
 contactSchema.statics.findUserByEmail = findUserByEmail;
 contactSchema.statics.findContactByToken = findContactByToken;
+contactSchema.statics.verifyUser = verifyUser;
 
 async function createContact(userParams) {
+  userParams.verificationToken = uuid.v4();
   return this.create(userParams);
 }
 
@@ -42,8 +46,8 @@ async function getById(id) {
   return this.findById(id);
 }
 
-async function findUserByEmail(email){
-  return this.findOne({email});
+async function findUserByEmail(email) {
+  return this.findOne({ email });
 }
 
 async function updateContactById(id, userParams) {
@@ -54,9 +58,15 @@ async function updateContactById(id, userParams) {
   return this.findByIdAndUpdate(id, { $set: userParams }, { new: true });
 }
 
+async function findContactByToken(verificationToken) {
+  return this.findOne({ verificationToken });
+}
 
-async function findContactByToken (token) {
-    return this.findOne({token})
+async function verifyUser(verificationToken) {
+  return this.updateOne(
+    { verificationToken },
+    { $set: { verificationToken: null } }
+  );
 }
 
 async function deleteContact(id) {
