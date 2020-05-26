@@ -1,9 +1,17 @@
 import { createControllerProxy } from "../helpers/controllerProxy";
 import { contactModel } from "../contacts/contacts.model";
-import { ConflictError, UnauthorizedError } from "../helpers/error.constructor";
+import {
+  ConflictError,
+  UnauthorizedError,
+  NotFound,
+} from "../helpers/error.constructor";
+const path = require("path");
+require('dotenv').config({path: path.join(__dirname,".env") })
+const sgMail = require('@sendgrid/mail');
 import bcryptjs from "bcryptjs";
 import Joi from "joi";
 import jwt from "jsonwebtoken";
+
 
 const JWT_SECRET = "dfsdfsfewfsfsdfsdfsdfsdf";
 const SERVER_URL = "http://localhost:1000";
@@ -12,6 +20,7 @@ const COMPRESSED_IMAGES_BASE_URL = "images";
 class AuthController {
   constructor() {
     this._saltrounds = 5;
+    sgMail.setApiKey(process.env.SEND_GRID_API);
   }
 
   async registerUser(req, res, next) {
@@ -27,10 +36,9 @@ class AuthController {
 
       //3. hash password
       const passwordHash = await this.hashpassword(password);
-      console.log(passwordHash);
 
       const avatarURL = `${SERVER_URL}/${COMPRESSED_IMAGES_BASE_URL}/${req.file}`;
-      console.log(avatarURL);
+
       //4. save user in DB
       const createdUser = await contactModel.createContact({
         email,
@@ -39,11 +47,9 @@ class AuthController {
         avatarURL,
       });
 
-        
-    
-
-
-      //send response
+      //5. email verification
+      this.sendVerificationEmail(createdUser);
+      //6. send response
       return res.status(201).json({
         user: this.composeUserForResponse(createdUser),
       });
@@ -111,6 +117,34 @@ class AuthController {
     }
   }
 
+  async sendVerificationEmail(user) {
+    const verificationLink = `${process.env.SERVER_BASE_URL}/user/auth/verify/${user.verificationToken}`;
+    
+    await sgMail.send({
+      to: user.email,
+      from: process.env.SENDER_EMAIL,
+      subject:"Please verify your email",
+      html:`<a href="${verificationLink}">Click here to verify your email<a/>`
+    })
+  }
+
+  async verifyUser(req, res, next) {
+    try {
+      const { verificationToken } = req.params;
+
+      const userToVerify = await contactModel.findContactByToken(verificationToken);
+      console.log(userToVerify);
+      if (!userToVerify) {
+        throw new NotFound("User not found");
+      }
+
+      await contactModel.verifyUser(verificationToken);
+      return res.status(200).send("User successfully verified");
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async createToken(uid) {
     return jwt.sign({ uid }, JWT_SECRET);
   }
@@ -136,66 +170,60 @@ class AuthController {
       const authHeader = req.headers.authorization || "";
       const token = authHeader.replace("Bearer ", "");
       //2. verify jwt token
-     
+
       try {
         jwt.verify(token, JWT_SECRET);
-
       } catch (err) {
-        throw new UnauthorizedError('User not authorized');
+        throw new UnauthorizedError("User not authorized");
       }
 
       //3. Find user by token
       const user = await contactModel.findContactByToken(token);
       if (!user) {
-        throw new UnauthorizedError('Token is not valid');
+        throw new UnauthorizedError("Token is not valid");
       }
-      //4. Invoke next middleware 
+      //4. Invoke next middleware
       req.user = user;
       req.token = token;
 
-      
       next();
-
     } catch (err) {
       next(err);
     }
   }
 
-  async signOut(req, res,next) {
-
-    try{
-      await contactModel.updateContactById(req.user._id, {token:null})
+  async signOut(req, res, next) {
+    try {
+      await contactModel.updateContactById(req.user._id, { token: null });
       return res.status(204).json();
-    }catch(err){
+    } catch (err) {
       next(err);
     }
   }
 
-  async getCurrentUser(req, res, next){
+  async getCurrentUser(req, res, next) {
     try {
       //1. Get tocken from header
       const authHeader = req.headers.authorization || "";
       const token = authHeader.replace("Bearer ", "");
       //2. verify jwt token
-     
+
       try {
         jwt.verify(token, JWT_SECRET);
-
       } catch (err) {
-        throw new UnauthorizedError('User not authorized');
+        throw new UnauthorizedError("User not authorized");
       }
 
       //3. Find user by token
       const user = await contactModel.findContactByToken(token);
       if (!user) {
-        throw new UnauthorizedError('Token is not valid');
+        throw new UnauthorizedError("Token is not valid");
       }
-      //4. Invoke next middleware 
+      //4. Invoke next middleware
       return res.status(200).json({
         user: this.composeUserForResponse(user),
-        subscription:user.subscription,
+        subscription: user.subscription,
       });
-
     } catch (err) {
       next(err);
     }
@@ -205,8 +233,7 @@ class AuthController {
     return {
       id: user._id,
       email: user.email,
-      avatarURL:user.avatarURL,
-      
+      avatarURL: user.avatarURL,
     };
   }
 }
